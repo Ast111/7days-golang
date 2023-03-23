@@ -45,6 +45,7 @@ func (r *router) addRoute(method string, pattern string, handler HandlerFunc) {
 	r.handlers[key] = handler
 }
 
+// getRoute 将客户端的请求的路径在前缀树中进行匹配，若返回为nil，则说明服务器无法处理
 func (r *router) getRoute(method string, path string) (*node, map[string]string) {
 	searchParts := parsePattern(path)
 	params := make(map[string]string)
@@ -85,8 +86,10 @@ func (r *router) getRoutes(method string) []*node {
 
 func (r *router) handle(c *Context) {
 	n, params := r.getRoute(c.Method, c.Path)
+	// 不为nil说明服务器可以处理
 	if n != nil {
 		c.Params = params
+		// 注意这里的key的构成用的是查询得到的节点的pattern而不是context的pattern——动态路由的核心：将一些具有相同构成的路径采取相同的函数进行处理
 		key := c.Method + "-" + n.pattern
 		r.handlers[key](c)
 	} else {
